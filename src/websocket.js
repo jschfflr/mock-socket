@@ -80,7 +80,7 @@ class WebSocket extends EventTarget {
           }
           this.readyState = WebSocket.OPEN;
           this.dispatchEvent(createEvent({ type: 'open', target: this }));
-          server.dispatchEvent(createEvent({ type: 'connection' }), proxyFactory(this));
+          server.dispatchEvent(createEvent({ type: 'connection' }), proxyFactory(this), this.url);
         }
       } else {
         this.readyState = WebSocket.CLOSED;

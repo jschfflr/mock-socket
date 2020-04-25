@@ -11,13 +11,7 @@ import { createEvent, createMessageEvent, createCloseEvent } from './event/facto
 class Server extends EventTarget {
   constructor(url, options = {}) {
     super();
-    const urlRecord = new URL(url);
-
-    if (!urlRecord.pathname) {
-      urlRecord.pathname = '/';
-    }
-
-    this.url = urlRecord.toString();
+    this.url = networkBridge.normalizeUrl(url);
 
     this.originalWebSocket = null;
     const server = networkBridge.attachServer(this, this.url);

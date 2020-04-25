@@ -4,7 +4,7 @@ import WebSocket from '../../src/websocket';
 import networkBridge from '../../src/network-bridge';
 
 test.afterEach(() => {
-  networkBridge.urlMap = {};
+  networkBridge.availableServers.clear();
 });
 
 test.cb('that creating a websocket with no server invokes the onerror method', t => {
@@ -44,7 +44,7 @@ test.cb('that failing the verifyClient check removes the websocket from the netw
   const mockSocket = new WebSocket('ws://localhost:8080');
 
   mockSocket.onclose = function close() {
-    const urlMap = networkBridge.urlMap['ws://localhost:8080/'];
+    const urlMap = networkBridge.get('ws://localhost:8080/');
     t.is(urlMap.websockets.length, 0, 'the websocket was removed from the network bridge');
     server.close();
     t.end();
@@ -208,14 +208,14 @@ test.cb('that closing a websocket removes it from the network bridge', t => {
   const socket = new WebSocket('ws://localhost:8080');
 
   socket.onopen = function open() {
-    const urlMap = networkBridge.urlMap['ws://localhost:8080/'];
+    const urlMap = networkBridge.get('ws://localhost:8080/');
     t.is(urlMap.websockets.length, 1, 'the websocket is in the network bridge');
     t.deepEqual(urlMap.websockets[0], this, 'the websocket is in the network bridge');
     this.close();
   };
 
   socket.onclose = function close() {
-    const urlMap = networkBridge.urlMap['ws://localhost:8080/'];
+    const urlMap = networkBridge.get('ws://localhost:8080/');
     t.is(urlMap.websockets.length, 0, 'the websocket was removed from the network bridge');
     server.close();
     t.end();
@@ -255,7 +255,7 @@ test.cb('that failing the selectProtocol check removes the websocket from the ne
   const mockSocket = new WebSocket('ws://localhost:8080');
 
   mockSocket.onclose = function close() {
-    const urlMap = networkBridge.urlMap['ws://localhost:8080/'];
+    const urlMap = networkBridge.get('ws://localhost:8080/');
     t.is(urlMap.websockets.length, 0, 'the websocket was removed from the network bridge');
     server.close();
     t.end();
@@ -332,7 +332,7 @@ test.cb('that client should close if the subprotocol is not of the selected set'
   const mockSocket = new WebSocket('ws://localhost:8080', 'text');
 
   mockSocket.onclose = function close() {
-    const urlMap = networkBridge.urlMap['ws://localhost:8080/'];
+    const urlMap = networkBridge.get('ws://localhost:8080/');
     t.is(urlMap.websockets.length, 0, 'the websocket was removed from the network bridge');
     server.close();
     t.end();

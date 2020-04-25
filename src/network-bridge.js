@@ -1,3 +1,4 @@
+import URL from 'url-parse';
 import { reject } from './helpers/array-helpers';
 
 function trimQueryPartFromURL(url) {
@@ -12,9 +13,26 @@ function trimQueryPartFromURL(url) {
  */
 class NetworkBridge {
   constructor() {
-    this.urlMap = {};
+    this.availableServers = new Map();
   }
 
+  /**
+   * Normalize a url to either return the origin or it's pathname
+   * in case of socket.io names
+   * @param {string} url 
+   */
+  normalizeUrl(url) {
+    const urlRecord = new URL(url);
+    return urlRecord.origin || urlRecord.pathname;
+  }
+
+  /**
+   * Return urlMap by normalized url
+   * @param {string} url 
+   */
+  get(url) {
+    return this.availableServers.get(this.normalizeUrl(url));
+  }
   /*
    * Attaches a websocket object to the urlMap hash so that it can find the server
    * it is connected to and the server in turn can find it.
@@ -23,8 +41,7 @@ class NetworkBridge {
    * @param {string} url
    */
   attachWebSocket(websocket, url) {
-    const serverURL = trimQueryPartFromURL(url);
-    const connectionLookup = this.urlMap[serverURL];
+    const connectionLookup = this.get(url);
 
     if (connectionLookup && connectionLookup.server && connectionLookup.websockets.indexOf(websocket) === -1) {
       connectionLookup.websockets.push(websocket);
@@ -36,7 +53,7 @@ class NetworkBridge {
    * Attaches a websocket to a room
    */
   addMembershipToRoom(websocket, room) {
-    const connectionLookup = this.urlMap[trimQueryPartFromURL(websocket.url)];
+    const connectionLookup = this.get(websocket.url);
 
     if (connectionLookup && connectionLookup.server && connectionLookup.websockets.indexOf(websocket) !== -1) {
       if (!connectionLookup.roomMemberships[room]) {
@@ -55,14 +72,15 @@ class NetworkBridge {
    * @param {string} url
    */
   attachServer(server, url) {
-    const connectionLookup = this.urlMap[url];
+    const normalizedUrl = this.normalizeUrl(url);
+    const connectionLookup = this.availableServers.get(normalizedUrl);
 
     if (!connectionLookup) {
-      this.urlMap[url] = {
+      this.availableServers.set(normalizedUrl, {
         server,
         websockets: [],
         roomMemberships: {}
-      };
+      });
 
       return server;
     }
@@ -74,8 +92,7 @@ class NetworkBridge {
    * @param {string} url - the url to use to find which server is running on it
    */
   serverLookup(url) {
-    const serverURL = trimQueryPartFromURL(url);
-    const connectionLookup = this.urlMap[serverURL];
+    const connectionLookup = this.get(url);
 
     if (connectionLookup) {
       return connectionLookup.server;
@@ -90,9 +107,8 @@ class NetworkBridge {
    * @param {class} broadcaster - socket that is broadcasting and is to be excluded from the lookup
    */
   websocketsLookup(url, room, broadcaster) {
-    const serverURL = trimQueryPartFromURL(url);
+    const connectionLookup = this.get(url);
     let websockets;
-    const connectionLookup = this.urlMap[serverURL];
 
     websockets = connectionLookup ? connectionLookup.websockets : [];
 
@@ -110,7 +126,7 @@ class NetworkBridge {
    * @param {string} url
    */
   removeServer(url) {
-    delete this.urlMap[trimQueryPartFromURL(url)];
+    this.availableServers.delete(this.normalizeUrl(url));
   }
 
   /*
@@ -120,8 +136,7 @@ class NetworkBridge {
    * @param {string} url
    */
   removeWebSocket(websocket, url) {
-    const serverURL = trimQueryPartFromURL(url);
-    const connectionLookup = this.urlMap[serverURL];
+    const connectionLookup = this.get(url);
 
     if (connectionLookup) {
       connectionLookup.websockets = reject(connectionLookup.websockets, socket => socket === websocket);
@@ -132,7 +147,7 @@ class NetworkBridge {
    * Removes a websocket from a room
    */
   removeMembershipFromRoom(websocket, room) {
-    const connectionLookup = this.urlMap[trimQueryPartFromURL(websocket.url)];
+    const connectionLookup = this.get(websocket.url);
     const memberships = connectionLookup.roomMemberships[room];
 
     if (connectionLookup && memberships !== null) {

@@ -13,11 +13,11 @@ test('that server inherents EventTarget methods', t => {
 
 test('that after creating a server it is added to the network bridge', t => {
   const myServer = new Server('ws://not-real/');
-  const urlMap = networkBridge.urlMap['ws://not-real/'];
+  const urlMap = networkBridge.get('ws://not-real/');
 
   t.deepEqual(urlMap.server, myServer, 'server was correctly added to the urlMap');
   myServer.close();
-  t.deepEqual(networkBridge.urlMap, {}, 'the urlMap was cleared after the close call');
+  t.deepEqual(networkBridge.availableServers.size, 0, 'the urlMap was cleared after the close call');
 });
 
 test('that callback functions can be added to the listeners object', t => {
@@ -75,11 +75,11 @@ test.cb('that calling close will trigger the onclose of websockets', t => {
 
 test('a namespaced server is added to the network bridge', t => {
   const myServer = Server.of('/my-namespace');
-  const urlMap = networkBridge.urlMap['/my-namespace'];
+  const urlMap = networkBridge.get('/my-namespace');
 
   t.deepEqual(urlMap.server, myServer, 'server was correctly added to the urlMap');
   myServer.close();
-  t.deepEqual(networkBridge.urlMap, {}, 'the urlMap was cleared after the close call');
+  t.deepEqual(networkBridge.availableServers.size, 0, 'the urlMap was cleared after the close call');
 });
 
 test('that calling close will trigger the onclose of websockets', t => {

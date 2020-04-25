@@ -5,7 +5,7 @@ import networkBridge from '../../src/network-bridge';
 import delay from '../../src/helpers/delay';
 
 test.afterEach(() => {
-  networkBridge.urlMap = {};
+  networkBridge.availableServers.clear();
 });
 
 test('calling close with a code that is not a number, 1000, < 3000, or > 4999 throws an error', t => {

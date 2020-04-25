@@ -19,13 +19,7 @@ class SocketIO extends EventTarget {
     super();
 
     this.binaryType = 'blob';
-    const urlRecord = new URL(url);
-
-    if (!urlRecord.pathname) {
-      urlRecord.pathname = '/';
-    }
-
-    this.url = urlRecord.toString();
+    this.url = networkBridge.normalizeUrl(url);
     this.readyState = SocketIO.CONNECTING;
     this.protocol = '';
 
